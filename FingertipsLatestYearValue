@@ -1,0 +1,21 @@
+FingertipsLatestYearValue = 
+VAR LatestYearHartlepool =  
+    CALCULATE(
+        MAX(dataFT[TimePeriodDate]),
+        FILTER(
+            dataFT,
+            NOT(ISBLANK(dataFT[value]))
+        )
+    )
+VAR LatestValue = 
+    CALCULATE(
+            MAX(dataFT[value]),
+            dataFT[Area Name] = "Hartlepool",
+            dataFT[TimePeriodDate] = LatestYearHartlepool
+        )
+RETURN
+    IF(
+        ISBLANK(LatestValue),
+        "N/A",
+        LatestValue
+    )
