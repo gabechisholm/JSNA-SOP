@@ -40,8 +40,8 @@ These files contain reusable DAX expressions used in the JSNA dashboard:
 - **SOP-Short.md**  
   A concise version of the SOP for quickly setting up a JSNA dashboard.
 
-- **SOP-Long.md**  
-  A comprehensive guide covering all steps from data import to dashboard publishing.
+- ~~**SOP-Long.md**  
+  A comprehensive guide covering all steps from data import to dashboard publishing.~~ *(Removed – no longer required)*
 
 ## 🛠️ Usage
 
