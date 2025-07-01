@@ -1,0 +1,51 @@
+NarrativeFingertips = 
+// Section 1: Define the current year and area/metric labels
+VAR CurrentYear = CALCULATE(MAX(dataFT[TimePeriodDate]), FILTER(dataFT, NOT(ISBLANK(dataFT[Value]))))
+VAR AreaLabel = SELECTEDVALUE(dataFT[Area Name])
+VAR MetricTypeAltLabel = SELECTEDVALUE(dataFT[Indicator Name])
+
+// Section 2: Calculate current and previous year values
+VAR CurrentValue = CALCULATE(SUM(dataFT[Value]), dataFT[TimePeriodDate] = CurrentYear)
+VAR thePreviousYear = CurrentYear - 1
+VAR PreviousYearValue = CALCULATE(SUM(dataFT[Value]), dataFT[TimePeriodDate] = thePreviousYear)
+
+// Section 3: Calculate values for the valid year (5 years ago or minimum year)
+VAR validYear = IF(CurrentYear - 5 < CALCULATE(MIN(dataFT[TimePeriodDate])), CALCULATE(MIN(dataFT[TimePeriodDate])), CurrentYear - 5)
+VAR validYearValue = CALCULATE(SUM(dataFT[Value]), dataFT[TimePeriodDate] = validYear)
+VAR yearDifference = CurrentYear - validYear
+VAR previousYearsCalc = CurrentValue - validYearValue
+VAR FiveYearChange = IF(NOT(ISBLANK(validYearValue)), ((CurrentValue - validYearValue) / ABS(validYearValue)) * 100, BLANK())
+
+// Section 4: Calculate ranking using simplified RANKX logic
+VAR RankMe = CALCULATE(MAX(dataFT[Rank]),dataFT[Area Name] = AreaLabel)
+VAR TotalPlaces = CALCULATE(DISTINCTCOUNT(dataFT[Area Name]),ALL(dataFT[Area Name]),NOT(ISBLANK(dataFT[Rank])))
+VAR incDec = IF(previousYearsCalc >= 0, "increase", "decrease")
+VAR PolarityCheck = IF(LOWER(SELECTEDVALUE(MetadataFingertips[Polarity])) = "not applicable", "with no given polarity.", "where 1 is best.")
+
+// Section 5: Calculate the latest year value for Hartlepool
+VAR LatestYearValue = 
+    VAR metricTypeLabel = SELECTEDVALUE(dataFT[Indicator Name])
+    VAR isNum = IF(NOT(ISBLANK(metricTypeLabel)) && LEFT(metricTypeLabel, 3) = "No.", TRUE(), FALSE())
+    VAR dataValue = CALCULATE(MAX(dataFT[Value]),dataFT[Area Name] = "Hartlepool",dataFT[TimePeriodDate] = MAX(dataFT[TimePeriodDate]))
+    VAR measureSelect = MAX(MetadataFingertips[Unit])
+    VAR isPercentage = CONTAINSSTRING(LOWER(measureSelect), "%") || CONTAINSSTRING(LOWER(measureSelect), "percent") || CONTAINSSTRING(LOWER(measureSelect), "percentage")
+    VAR measureCheck = IF(isPercentage, "%", "")
+    RETURN IF(isNum,FORMAT((dataValue / 88888888) * 10000, "0.00") & " per 10,000",FORMAT(dataValue, "#,#0.0") & measureCheck)
+
+// Section 6: Adjust current value format and determine difference label
+VAR isValueRate = CONTAINSSTRING(LatestYearValue, "per 10,000")
+VAR isPercentage = CONTAINSSTRING(LOWER(MAX(MetadataFingertips[Unit])), "%") || CONTAINSSTRING(LOWER(MAX(MetadataFingertips[Unit])), "percent") || CONTAINSSTRING(LOWER(MAX(MetadataFingertips[Unit])), "percentage")
+VAR AdjustedCurrentValue = LatestYearValue
+VAR DifferenceLabel = IF(isPercentage, " percentage point", "")
+VAR PreviousYearValueFormatted = IF(isPercentage,FORMAT(PreviousYearValue, "0.00") & "%",FORMAT(PreviousYearValue, "0.00"))
+
+
+// Section 7: Return the narrative
+RETURN
+    "In " & CurrentYear & " in " & AreaLabel & ", the " & MetricTypeAltLabel & " was recorded at " &
+    AdjustedCurrentValue & ". The previous year (" & thePreviousYear & ") had a recorded value of " &
+    PreviousYearValueFormatted & ", so this represents a " &
+    FORMAT(CurrentValue - PreviousYearValue, "0.00") & DifferenceLabel & " difference. Over the past " &
+    yearDifference & " years, there has been a " & incDec & " of " & FORMAT(ABS(previousYearsCalc), "0.00") & DifferenceLabel &  ". " & AreaLabel & " ranks " &
+    RankMe & " out of " & TotalPlaces &
+    " local authorities for this indicator " & PolarityCheck
