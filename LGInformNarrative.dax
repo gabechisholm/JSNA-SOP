@@ -1,0 +1,63 @@
+LGInformNarrative = 
+// Section 1: Define the current year and area/metric labels
+VAR CurrentYear = CALCULATE(MAX(dataLG[periodLabel]), FILTER(dataLG, NOT(ISBLANK(dataLG[value]))))
+VAR AreaLabel = SELECTEDVALUE(dataLG[areaLabel])
+VAR MetricTypeAltLabel = SELECTEDVALUE(dataLG[metricTypeLabel])
+
+// Section 2: Calculate current and previous year values
+VAR CurrentValue = CALCULATE(SUM(dataLG[value]), dataLG[periodLabel] = CurrentYear)
+VAR thePreviousYear = CurrentYear - 1
+VAR PreviousYearValue = CALCULATE(SUM(dataLG[value]), dataLG[periodLabel] = thePreviousYear)
+
+// Section 3: Calculate values for the valid year (5 years ago or minimum year)
+VAR validYear = IF(CurrentYear - 5 < CALCULATE(MIN(dataLG[periodLabel])), CALCULATE(MIN(dataLG[periodLabel])), CurrentYear - 5)
+VAR validYearValue = CALCULATE(SUM(dataLG[Value]), dataLG[periodLabel] = validYear)
+VAR yearDifference = CurrentYear - validYear
+VAR previousYearsCalc = CurrentValue - validYearValue
+VAR FiveYearChange = IF(NOT(ISBLANK(validYearValue)), ((CurrentValue - validYearValue) / ABS(validYearValue)) * 100, BLANK())
+
+// Section 4: Calculate ranking using LGInformRank logic
+VAR NewRankLACount =
+    ROUND(DIVIDE(
+        SUM('rankingLG'[Olympic rank within England Local authorities]),
+        SUM('rankingLG'[% Olympic rank within England Local authorities])
+    ) * 100, 0)
+VAR RankValue =
+    CALCULATE(
+        MAX('rankingLG'[Olympic rank within England Local authorities])
+    )
+VAR RankMe = IF(
+    ISBLANK(RankValue),
+    "Not Available",
+    RankValue & " out of " & NewRankLACount
+)
+VAR incDec = IF(previousYearsCalc >= 0, "increase", "decrease")
+VAR PolarityCheck = IF(LOWER(SELECTEDVALUE(MetadataFingertips[Polarity])) = "not applicable", "with no given polarity.", "where 1 is best.")
+
+
+// Section 5: Calculate the latest year value for Hartlepool
+VAR LatestYearValue = 
+    VAR metricTypeLabel = SELECTEDVALUE(dataLG[metricTypeLabel])
+    VAR isNum = IF(NOT(ISBLANK(metricTypeLabel)) && LEFT(metricTypeLabel, 3) = "No.", TRUE(), FALSE())
+    VAR dataValue = CALCULATE(MAX(dataLG[Value]),dataLG[areaLabel] = "Hartlepool",dataLG[periodLabel] = MAX(dataLG[periodLabel]))
+    VAR measureSelect = MAX(MetadataLGInform[Measure])
+    VAR isPercentage = CONTAINSSTRING(LOWER(measureSelect), "%") || CONTAINSSTRING(LOWER(measureSelect), "percent") || CONTAINSSTRING(LOWER(measureSelect), "percentage")
+    VAR measureCheck = IF(isPercentage, "%", "")
+    RETURN IF(isNum,FORMAT((dataValue / 88888888) * 10000, "0.00") & " per 10,000",FORMAT(dataValue, "#,#0.0") & measureCheck)
+
+// Section 6: Adjust current value format and determine difference label
+VAR isValueRate = CONTAINSSTRING(LatestYearValue, "per 10,000")
+VAR isPercentage = CONTAINSSTRING(LOWER(MAX(MetadataLGInform[Measure])), "%") || CONTAINSSTRING(LOWER(MAX(MetadataLGInform[Measure])), "percent") || CONTAINSSTRING(LOWER(MAX(MetadataLGInform[Measure])), "percentage")
+VAR AdjustedCurrentValue = LatestYearValue
+VAR DifferenceLabel = IF(isPercentage, " percentage point", "")
+VAR PreviousYearValueFormatted = IF(isPercentage,FORMAT(PreviousYearValue, "0.00") & "%",FORMAT(PreviousYearValue, "0.00"))
+
+
+// Section 7: Return the narrative
+RETURN
+    "In " & CurrentYear & " in " & AreaLabel & ", the " & MetricTypeAltLabel & " was recorded at " &
+    AdjustedCurrentValue & ". The previous year (" & thePreviousYear & ") had a recorded value of " &
+    PreviousYearValueFormatted & ", so this represents a " &
+    FORMAT(CurrentValue - PreviousYearValue, "0.00") & DifferenceLabel & " difference. Over the past " &
+    yearDifference & " years, there has been a " & incDec & " of " & FORMAT(ABS(previousYearsCalc), "0.00") & DifferenceLabel &  ". " & AreaLabel & " ranks " &
+    RankMe &" local authorities for this indicator " & PolarityCheck
