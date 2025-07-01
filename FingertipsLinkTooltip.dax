@@ -1,0 +1,6 @@
+FingertipsLinkTooltip = 
+IF(
+    NOT(ISBLANK(SELECTEDVALUE(MetadataFingertips[CleanLink]))),
+    SELECTEDVALUE(MetadataFingertips[CleanLink]),
+    "Link Unavailable"
+)
