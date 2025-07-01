@@ -1,0 +1,5 @@
+FingertipsRank = 
+VAR Numerator = CALCULATE(MAX(dataFT[Rank]), dataFT[Area Name] = "Hartlepool")
+VAR Denominator = CALCULATE(DISTINCTCOUNT(dataFT[Area Name]), NOT(ISBLANK(dataFT[Rank])))
+RETURN
+    Numerator & " out of " & Denominator
