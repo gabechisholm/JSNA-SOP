@@ -110,5 +110,6 @@ Update:
 ## Final Check
 
 - Ensure all filters, visuals, buttons, and bookmarks work.
+- Check that all navigation buttons work as intended.
 - Confirm contact info and release notes are accurate.
 - Publish when ready.
