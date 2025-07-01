@@ -1,0 +1,17 @@
+LGInformRank = 
+VAR NewRankLACount =
+    ROUND(DIVIDE(
+        SUM('rankingLG'[Olympic rank within England Local authorities]),
+        SUM('rankingLG'[% Olympic rank within England Local authorities])
+    ) * 100, 0)
+VAR RankValue =
+    CALCULATE(
+        MAX('rankingLG'[Olympic rank within England Local authorities])
+    )
+ 
+RETURN
+    IF(
+        ISBLANK(RankValue),
+        "Not Available",
+        RankValue & " out of " & NewRankLACount
+    )
