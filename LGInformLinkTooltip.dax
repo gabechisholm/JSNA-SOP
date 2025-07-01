@@ -1,0 +1,6 @@
+LGInformLinkTooltip = 
+IF(
+    NOT(ISBLANK(SELECTEDVALUE(MetadataLGInform[Collection url]))),
+    SELECTEDVALUE(MetadataLGInform[Collection url]),
+    "Link Unavailable"
+)
