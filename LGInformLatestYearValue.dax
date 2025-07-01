@@ -1,0 +1,21 @@
+LGInformLatestYearValue = 
+VAR LatestYearHartlepool =  
+    CALCULATE(
+        MAX(dataLG[periodLabel]),
+        FILTER(
+            dataLG,
+            NOT(ISBLANK(dataLG[value]))
+        )
+    )
+VAR LatestValue = 
+    CALCULATE(
+            MAX(dataLG[value]),
+            dataLG[areaLabel] = "Hartlepool",
+            dataLG[periodLabel] = LatestYearHartlepool
+        )
+RETURN
+    IF(
+        ISBLANK(LatestValue),
+        "N/A",
+        LatestValue
+    )
