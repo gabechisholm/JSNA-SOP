@@ -1,6 +1,0 @@
-FingertipsPercentile = 
-VAR RankValue = CALCULATE(MAX(dataFT[Rank]), dataFT[Area Name] = "Hartlepool")
-VAR TotalCount = CALCULATE(DISTINCTCOUNT(dataFT[Area Name]), NOT(ISBLANK(dataFT[Rank])))
-VAR Percentile = DIVIDE(TotalCount - RankValue + 1, TotalCount)
-RETURN
-    FORMAT(Percentile, "Percent")
